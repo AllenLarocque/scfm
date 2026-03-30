@@ -45,7 +45,9 @@ defineModule(sim, list(
                                  "a new spread probability. Names should correspond to `PolyID`.",
                                  "A partial set of polygons is allowed - missing polys are estimated from data.")),
     defineParameter(".useCache", "logical", FALSE, NA, NA,
-                    desc = "Internal. Can be names of events or the whole module name to be cached by SpaDES.")
+                    desc = "Internal. Can be names of events or the whole module name to be cached by SpaDES."),
+    defineParameter("fireMultiplier", "numeric", NULL, NA, NA,
+                    desc = "Scale factor for burn rate. If not NULL and != 1, targetBurnRate = empiricalBurnRate * fireMultiplier per polygon. Ignored if targetBurnRate is explicitly set.")
   ),
   inputObjects = bindrows(
     expectsInput("firePoints", "sf",
@@ -160,7 +162,8 @@ Init <- function(sim) {
       maxSizeFactor = P(sim)$empiricalMaxSizeFactor,
       fireSizeColumnName = P(sim)$fireSizeColumnName,
       targetBurnRate = P(sim)$targetBurnRate,
-      targetMaxFireSize = P(sim)$targetMaxFireSize
+      targetMaxFireSize = P(sim)$targetMaxFireSize,
+      fireMultiplier = P(sim)$fireMultiplier
     ) |>
     rbindlist(fill = TRUE)
 

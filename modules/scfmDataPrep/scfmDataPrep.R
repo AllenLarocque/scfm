@@ -102,7 +102,9 @@ defineModule(sim, list(
     defineParameter(".useCloud", "logical", getOption("reproducible.useCloud", FALSE), NA, NA,
                     "should a cloud cache be used for heavy operations"),
     defineParameter(".useParallelFireRegimePolys", "logical", getOption("pemisc.useParallel", FALSE), NA, NA,
-                    "should driver use parallel? Alternatively accepts a numeric argument, i.e., how many cores.")
+                    "should driver use parallel? Alternatively accepts a numeric argument, i.e., how many cores."),
+    defineParameter("fireMultiplier", "numeric", NULL, NA, NA,
+                    desc = "Scale factor for burn rate. If not NULL and != 1, targetBurnRate = empiricalBurnRate * fireMultiplier per polygon. Ignored if targetBurnRate is explicitly set.")
   ),
   inputObjects = bindrows(
     expectsInput("cloudFolderID", "character",
@@ -335,7 +337,8 @@ prepare_scfmRegime <- function(sim) {
       maxSizeFactor = P(sim)$empiricalMaxSizeFactor,
       fireSizeColumnName = P(sim)$fireSizeColumnName,
       targetBurnRate = P(sim)$targetBurnRate,
-      targetMaxFireSize = P(sim)$targetMaxFireSize
+      targetMaxFireSize = P(sim)$targetMaxFireSize,
+      fireMultiplier = P(sim)$fireMultiplier
     ) |>
     rbindlist(fill = TRUE)
 
