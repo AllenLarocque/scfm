@@ -52,9 +52,10 @@ test_that("parameters are the expected names", {
            ".saveInterval", ".studyAreaName", ".useCache", ".useCacheArgs", ".useCloud",
            ".useParallelFireRegimePolys", "buffDist", "cloudFolderID", "dataYear",
            "empiricalMaxSizeFactor", "eventsToPrepare", "fireCause",
-           "fireCauseColumnName", "fireEpoch", "fireRegimePolysType",
+           "fireCauseColumnName", "fireEpoch", "fireMultiplier", "fireMultiplierMethod",
+           "fireMultiplierWeights", "fireRegimePolysType",
            "fireSizeColumnName", "fireYearColumnName", "flammabilityThreshold",
-           "limitRAMuse", "neighbours", "pJmp", "pMax", "pMin", "scamOptimizer",
+           "limitRAMuse", "neighbours", "pJmp", "pMax", "pMin", "scaleMaxFireSize", "scamOptimizer",
            "sliverThreshold", "targetBurnRate", "targetMaxFireSize", "targetN"))
   )
 })

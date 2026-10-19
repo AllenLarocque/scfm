@@ -21,7 +21,7 @@ defineModule(sim, list(
     person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = c("ctb"))
   ),
   childModules = character(0),
-  version = list(scfmDataPrep = "2.1.0"),
+  version = list(scfmDataPrep = "2.1.0.9000"),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -30,7 +30,7 @@ defineModule(sim, list(
     "dplyr", "ggplot2", "parallel",
     "PredictiveEcology/LandR@development (>= 1.1.5.9041)",
     "PredictiveEcology/pemisc@development",
-    "PredictiveEcology/scfmutils@development (>= 2.0.9.9003)",
+    "PredictiveEcology/scfmutils@development (>= 2.0.9.9012)",
     "PredictiveEcology/SpaDES.core@development (>= 2.1.5.9002)",
     "PredictiveEcology/SpaDES.tools (>= 1.0.2.9001)",
     "purrr", "reproducible", "sf", "stats", "terra"
@@ -55,6 +55,19 @@ defineModule(sim, list(
     defineParameter("fireCauseColumnName", "character", "CAUSE", NA, NA,
                     desc = "Name of the column that has fire cause, consistent with `P(sim)$fireCause`."),
     defineParameter("fireEpoch", "numeric", c(1971, 2020), NA, NA, "start of normal period"),
+    defineParameter("fireMultiplier", "numeric", 1, 0, NA,
+                    desc = paste("multiplies the burn rate estimated from data in every fire regime polygon,",
+                                 "e.g. 2 for twice the area burned. The multiplier is split between the ignition",
+                                 "rate, escape probability and mean fire size by `scfmutils::partitionBurnRateMultiplier`.",
+                                 "Ignored in polygons that have a `targetBurnRate`. The default, 1, changes nothing.")),
+    defineParameter("fireMultiplierMethod", "character", "weighted", NA, NA,
+                    desc = paste("how `fireMultiplier` is split: `'weighted'` (by `fireMultiplierWeights`) or",
+                                 "`'stepwise'` (as `targetBurnRate` is split).",
+                                 "See `?scfmutils::partitionBurnRateMultiplier`.")),
+    defineParameter("fireMultiplierWeights", "numeric", c(ignition = 0.3, escape = 0.4, size = 0.3), 0, 1,
+                    desc = paste("named vector (`ignition`, `escape`, `size`, summing to 1) giving the share of",
+                                 "`fireMultiplier` taken by the ignition rate, escape probability and mean fire size",
+                                 "on the log scale. Used only when `fireMultiplierMethod = 'weighted'`.")),
     defineParameter("fireRegimePolysType", "character", "ECOREGION", NA, NA,
                     paste("Polygon type to use for scfm `fireRegimePolys`:",
                           "see `?scfmutils::prepInputsFireRegimePolys` for allowed types.")),
@@ -73,6 +86,9 @@ defineModule(sim, list(
     defineParameter("pJmp", "numeric", 0.23, 0.18, 0.25, "default spread prob for degenerate polygons"),
     defineParameter("pMax", "numeric", 0.253, 0.24, 0.26, "maximum spread range for calibration"),
     defineParameter("pMin", "numeric", 0.185, 0.15, 0.225, "minimum spread range for calibration"),
+    defineParameter("scaleMaxFireSize", "logical", FALSE, NA, NA,
+                    desc = paste("if `TRUE`, the maximum fire size (`xMax` and `emfs_ha`) is scaled by the same",
+                                 "factor as the mean fire size when `fireMultiplier` is applied.")),
     defineParameter("scamOptimizer", "character", "bfgs", NA, NA,
                     "numerical optimization method used in fitting scam model; see `?scam`."),
     defineParameter("sliverThreshold", "numeric", 6.25e8, NA, NA,
@@ -341,7 +357,11 @@ prepare_scfmRegime <- function(sim) {
       maxSizeFactor = P(sim)$empiricalMaxSizeFactor,
       fireSizeColumnName = P(sim)$fireSizeColumnName,
       targetBurnRate = P(sim)$targetBurnRate,
-      targetMaxFireSize = P(sim)$targetMaxFireSize
+      targetMaxFireSize = P(sim)$targetMaxFireSize,
+      fireMultiplier = P(sim)$fireMultiplier,
+      fireMultiplierMethod = P(sim)$fireMultiplierMethod,
+      fireMultiplierWeights = P(sim)$fireMultiplierWeights,
+      scaleMaxFireSize = P(sim)$scaleMaxFireSize
     ) |>
     rbindlist(fill = TRUE)
   

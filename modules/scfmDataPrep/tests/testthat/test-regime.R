@@ -99,3 +99,49 @@ test_that("the spread calibration gives each polygon with fires its spread, esca
   ## polygon 2 had no fires: it never ignites
   expect_identical(frp$pIgnition[frp$PolyID == 2], 0)
 })
+
+test_that("fireMultiplier scales the burn rate and leaves the empirical estimates alone", {
+  base <- runInit(toySim())$fireRegimePolys
+  base <- base[base$PolyID == 1, ]
+  frp <- runInit(toySim(fireMultiplier = 2))$fireRegimePolys
+  p1 <- frp[frp$PolyID == 1, ]
+  expect_equal(p1$ignitionRate * p1$pEscape * p1$xBar, 2 * base$ignitionRate * base$pEscape * base$xBar)
+  ## the default weights: ignition rate x 2^0.3, escape probability x 2^0.4, mean fire size x 2^0.3
+  expect_equal(p1$ignitionRate, base$ignitionRate * 2^0.3)
+  expect_equal(p1$pEscape, base$pEscape * 2^0.4)
+  expect_equal(p1$xBar, base$xBar * 2^0.3)
+  expect_equal(p1$empiricalBurnRate, base$empiricalBurnRate)
+  expect_equal(p1$xMax, base$xMax)                                   # scaleMaxFireSize = FALSE
+  ## polygon 2 still has no fires
+  expect_true(is.na(frp$ignitionRate[frp$PolyID == 2]))
+})
+
+test_that("a fireMultiplier of 0.5 halves the burn rate", {
+  base <- runInit(toySim())$fireRegimePolys
+  base <- base[base$PolyID == 1, ]
+  p1 <- runInit(toySim(fireMultiplier = 0.5))$fireRegimePolys
+  p1 <- p1[p1$PolyID == 1, ]
+  expect_equal(p1$ignitionRate * p1$pEscape * p1$xBar, 0.5 * base$ignitionRate * base$pEscape * base$xBar)
+  expect_equal(p1$ignitionRate, base$ignitionRate * 0.5^0.3)
+  expect_equal(p1$pEscape, base$pEscape * 0.5^0.4)
+  expect_equal(p1$xBar, base$xBar * 0.5^0.3)
+  expect_equal(p1$empiricalBurnRate, base$empiricalBurnRate)
+})
+
+test_that("scaleMaxFireSize scales the maximum fire size with the mean fire size", {
+  base <- runInit(toySim())$fireRegimePolys
+  base <- base[base$PolyID == 1, ]
+  p1 <- runInit(toySim(fireMultiplier = 2, scaleMaxFireSize = TRUE))$fireRegimePolys
+  p1 <- p1[p1$PolyID == 1, ]
+  expect_equal(p1$xMax, base$xMax * 2^0.3)
+  expect_equal(p1$emfs_ha, base$emfs_ha * 2^0.3)
+})
+
+test_that("targetBurnRate takes priority over fireMultiplier", {
+  tbr <- c("1" = 0.05)
+  base <- runInit(toySim(targetBurnRate = tbr))$fireRegimePolys
+  frp <- runInit(toySim(targetBurnRate = tbr, fireMultiplier = 2))$fireRegimePolys
+  expect_equal(frp$ignitionRate, base$ignitionRate)
+  expect_equal(frp$pEscape, base$pEscape)
+  expect_equal(frp$xBar, base$xBar)
+})
