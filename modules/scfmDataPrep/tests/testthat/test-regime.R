@@ -106,10 +106,10 @@ test_that("fireMultiplier scales the burn rate and leaves the empirical estimate
   frp <- runInit(toySim(fireMultiplier = 2))$fireRegimePolys
   p1 <- frp[frp$PolyID == 1, ]
   expect_equal(p1$ignitionRate * p1$pEscape * p1$xBar, 2 * base$ignitionRate * base$pEscape * base$xBar)
-  ## the default weights: ignition rate x 2^0.3, escape probability x 2^0.4, mean fire size x 2^0.3
-  expect_equal(p1$ignitionRate, base$ignitionRate * 2^0.3)
-  expect_equal(p1$pEscape, base$pEscape * 2^0.4)
-  expect_equal(p1$xBar, base$xBar * 2^0.3)
+  ## the default (equal) weights: each component x 2^(1 / 3)
+  expect_equal(p1$ignitionRate, base$ignitionRate * 2^(1 / 3))
+  expect_equal(p1$pEscape, base$pEscape * 2^(1 / 3))
+  expect_equal(p1$xBar, base$xBar * 2^(1 / 3))
   expect_equal(p1$empiricalBurnRate, base$empiricalBurnRate)
   expect_equal(p1$xMax, base$xMax)                                   # scaleMaxFireSize = FALSE
   ## polygon 2 still has no fires
@@ -122,9 +122,9 @@ test_that("a fireMultiplier of 0.5 halves the burn rate", {
   p1 <- runInit(toySim(fireMultiplier = 0.5))$fireRegimePolys
   p1 <- p1[p1$PolyID == 1, ]
   expect_equal(p1$ignitionRate * p1$pEscape * p1$xBar, 0.5 * base$ignitionRate * base$pEscape * base$xBar)
-  expect_equal(p1$ignitionRate, base$ignitionRate * 0.5^0.3)
-  expect_equal(p1$pEscape, base$pEscape * 0.5^0.4)
-  expect_equal(p1$xBar, base$xBar * 0.5^0.3)
+  expect_equal(p1$ignitionRate, base$ignitionRate * 0.5^(1 / 3))
+  expect_equal(p1$pEscape, base$pEscape * 0.5^(1 / 3))
+  expect_equal(p1$xBar, base$xBar * 0.5^(1 / 3))
   expect_equal(p1$empiricalBurnRate, base$empiricalBurnRate)
 })
 
@@ -133,8 +133,8 @@ test_that("scaleMaxFireSize scales the maximum fire size with the mean fire size
   base <- base[base$PolyID == 1, ]
   p1 <- runInit(toySim(fireMultiplier = 2, scaleMaxFireSize = TRUE))$fireRegimePolys
   p1 <- p1[p1$PolyID == 1, ]
-  expect_equal(p1$xMax, base$xMax * 2^0.3)
-  expect_equal(p1$emfs_ha, base$emfs_ha * 2^0.3)
+  expect_equal(p1$xMax, base$xMax * 2^(1 / 3))
+  expect_equal(p1$emfs_ha, base$emfs_ha * 2^(1 / 3))
 })
 
 test_that("targetBurnRate takes priority over fireMultiplier", {
