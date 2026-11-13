@@ -32,7 +32,7 @@ toySim <- function(eventsToPrepare = c("scfmLandcoverInit", "scfmRegime"), ...) 
   flam <- rtm
   flam[toyCol(rtm) == 1] <- 0L
   sa <- sf::st_sf(geometry = bbox(0, 5000))
-  frp <- sf::st_sf(PolyID = 1:2, geometry = c(bbox(0, 2500), bbox(2500, 5000)))
+  frp <- sf::st_sf(PolyID = 1:2, zone = c("A", "B"), geometry = c(bbox(0, 2500), bbox(2500, 5000)))
   root <- withr::local_tempdir(.local_envir = parent.frame())
   suppressMessages(SpaDES.core::simInit(
     times = list(start = 1, end = 1),
@@ -144,4 +144,21 @@ test_that("targetBurnRate takes priority over fireMultiplier", {
   expect_equal(frp$ignitionRate, base$ignitionRate)
   expect_equal(frp$pEscape, base$pEscape)
   expect_equal(frp$xBar, base$xBar)
+})
+
+test_that("fireMultiplier and fireMultiplierWeights can be given per polygon", {
+  regimeCols <- c("ignitionRate", "pEscape", "xBar", "xMax", "emfs_ha")
+  poly1 <- function(sim) as.data.frame(sim$fireRegimePolys)[sim$fireRegimePolys$PolyID == 1, regimeCols]
+  x2 <- poly1(runInit(toySim(fireMultiplier = 2)))
+  ## by PolyID
+  byID <- poly1(runInit(toySim(fireMultiplier = data.frame(PolyID = 1:2, fireMultiplier = c(2, 1)))))
+  expect_equal(byID, x2)
+  ## by a label column of fireRegimePolys
+  byZone <- poly1(runInit(toySim(fireMultiplier = data.frame(zone = c("A", "B"), fireMultiplier = c(2, 1)))))
+  expect_equal(byZone, x2)
+  ## per-polygon weights
+  sizeOnly <- poly1(runInit(toySim(fireMultiplier = 2,
+                                   fireMultiplierWeights = c(ignition = 0, escape = 0, size = 1))))
+  w <- data.frame(zone = c("A", "B"), ignition = c(0, 1 / 3), escape = c(0, 1 / 3), size = c(1, 1 / 3))
+  expect_equal(poly1(runInit(toySim(fireMultiplier = 2, fireMultiplierWeights = w))), sizeOnly)
 })
